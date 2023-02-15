@@ -1,0 +1,41 @@
+# Powershell script to create (with option to run) a custom netsh command 
+
+# List network adapters
+Get-NetAdapter -Name *
+
+# Define the interface name
+$interfaceName = Read-Host -Prompt "Interface Name to perform PCAP on?"
+
+# Define the capture file name
+$captureFileName = Read-Host -Prompt "Enter the capture file path and name"
+
+# Define the maximum capture size in MB
+$captureSize = Read-Host -Prompt "Enter the maximum capture size in MB"
+
+# Define the capture filter
+$captureFilter = Read-Host -Prompt "Enter the capture filter"
+
+# Build the netsh command for starting a packet capture
+$startCaptureCommand = "netsh trace start capture=yes  CaptureInterface=$interfaceName"
+
+#$startCaptureCommand = "netsh trace start capture=yes tracefile=$captureFileName maxsize=$captureSizeMBMB CaptureInterface=$interfaceName $captureFilter"
+
+Write-Host "PCAP Script: PS C:> $startCaptureCommand"
+
+$runNow = Read-Host -Prompt "Run PCAP now? [Y/N]:"
+
+if($runNow -eq 'Y'){
+
+	# Execute the netsh command to start the packet capture
+	Invoke-Expression $startCaptureCommand
+
+	# Wait for the user to stop the capture
+	Write-Host "Press Enter to stop the packet capture"
+	Read-Host
+
+	# Build the netsh command for stopping the packet capture
+	$stopCaptureCommand = "netsh trace stop"
+
+	# Execute the netsh command to stop the packet capture
+	Invoke-Expression $stopCaptureCommand
+}
