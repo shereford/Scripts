@@ -1,0 +1,60 @@
+# Script to create a new nested OU in Domain Controllers and assign policy (nomrally PDC_Emulator)
+# If PDC transfer is performed NTP must also be moved to avoid time sync issues
+
+# 1. TRANSFER FSMO ROLES
+
+# FROM AN ELEVATED POWERSHELL ON AN APPONE DOMAIN CONTROLLER DECLARE THE FOLLOWING VARIABLES
+$DestDC01 = "FQDN Dest DC01"
+$DestDC02 = "FQDN Dest DC02"
+$SourceDC01 = "FQDN source DC01"
+$SourceDC02 = "FQDN source DC02"
+
+#Import Active Directory Module
+
+Import-Module ActiveDirectory
+
+Move-ADDirectoryServerOperationMasterRole -Identity $DestDC02 -OperationMasterRole 3,4
+
+# Move PDC, RID, and Infra Master Roles 
+
+Move-ADDirectoryServerOperationMasterRole -Identity $DestDC01 -OperationMasterRole 0,1,2
+
+# 2. CONFIRM FSMO Roles Transferred
+netdom query fsmo
+
+Get-ADDomainController -Filter * | ?{$_.OperationMasterRoles} | ft -auto Name,OperationMasterRoles
+
+#BELOW COMMAND SHOULD NOT BE RUN AGAINST THE RID MASTER itself
+dcdiag /s:$sourceDC0X /test:RidManager /v
+
+
+# CREATE A NEW Nested OU in DOMAIN CONTROLLERS > Child
+
+$ParentOUDN = "OU=Child,OU=Domain Controllers,DC=domain,DC=local"
+$NewOUName = "New OU Name"
+
+New-ADOrganizationalUnit -Name $NewOUName -Path $ParentOUDN
+
+# ADD Policy to Domain Controllers/Child/NewOUName
+
+Import-Module GroupPolicy
+$gpo = Get-GPO -Name "Policy to import"
+$ou = [ADSI]"LDAP://OU=NewOUName,OU=Child,OU=Domain Controllers,DC=domain,DC=local"
+New-GPLink -Name $gpo.DisplayName -Target $ou.Path
+
+# Move Computer Object into the New OU
+$computerDN = "CN=Computer_name,OU=Child,OU=Domain Controllers,DC=domain,DC=local"
+$computer = [ADSI]"LDAP://$computerDN"
+$destinationOU = "LDAP://OU=NewOU,OU=Child,OU=Domain Controllers,DC=appone,DC=local"
+
+$computer.MoveTo($destinationOU)
+$computer.SetInfo()
+
+# Move SourceDC from Domain Controllers/Child/PDC_Emulator to Domain Controllers/Child/NewOU
+
+$computerDN = "CN=Source Computer Name,OU=PDC_Emulator,OU=Child,OU=Domain Controllers,DC=domain,DC=local"
+$computer = [ADSI]"LDAP://$computerDN"
+$destinationOU = "LDAP://OU=Child,OU=Domain Controllers,DC=domain,DC=local"
+
+$computer.MoveTo($destinationOU)
+$computer.SetInfo()
