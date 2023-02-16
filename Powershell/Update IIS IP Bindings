@@ -1,0 +1,15 @@
+Import-Module WebAdministration
+
+# Variables
+$siteName = "UPDATE_ME_WITH_REAL_SITE_NAME"
+$ipAddress = "123.456.UPDATE.ME"
+$site = Get-Item "IIS:\Sites\$siteName"
+
+# Get the binding object for the site (update protocol to https as required)
+$binding = $site.bindings.collection | Where-Object { $_.protocol -eq "http" }
+
+# Set IP for binding (may need to update to 443/https?)
+$binding.bindingInformation = "$ipAddress:80:$siteName"
+
+# Apply the change
+$site | Set-Item
