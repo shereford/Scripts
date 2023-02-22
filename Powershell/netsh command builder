@@ -1,5 +1,3 @@
-# Powershell script to create (with option to run) a custom netsh command 
-
 # List network adapters
 Get-NetAdapter -Name *
 
@@ -16,7 +14,7 @@ $captureSize = Read-Host -Prompt "Enter the maximum capture size in MB"
 $captureFilter = Read-Host -Prompt "Enter the capture filter"
 
 # Build the netsh command for starting a packet capture
-$startCaptureCommand = "netsh trace start capture=yes  CaptureInterface=$interfaceName"
+$startCaptureCommand = "netsh trace start capture=yes tracefile=$captureFileName maxsize=$captureSize CaptureInterface=$interfaceName $captureFilter"
 
 #$startCaptureCommand = "netsh trace start capture=yes tracefile=$captureFileName maxsize=$captureSizeMBMB CaptureInterface=$interfaceName $captureFilter"
 
@@ -38,4 +36,14 @@ if($runNow -eq 'Y'){
 
 	# Execute the netsh command to stop the packet capture
 	Invoke-Expression $stopCaptureCommand
+}
+$convertWS = Read-Host -Prompt "Download etl2pcapng.exe and convert ETL to PCAPNG for use with WireShark? [Y/N]: "
+
+
+if($convertWS -eq 'Y'){
+
+Invoke-WebRequest 'https://github.com/microsoft/etl2pcapng/releases/download/v1.10.0/etl2pcapng.exe' -OutFile ./etl2pcapng.exe
+
+etl2pcapng.exe $captureFileName ($captureFileName + ".pcapng")
+
 }
