@@ -1,0 +1,335 @@
+# Created by Seth Hereford 3/26/2023 for DevOps SRE team
+#
+# URLs last updated 3/26/2023
+#
+# Script to auto-install commonly used desktop applcations for devops team members
+
+# Download Links - Links should be updated regularly
+
+#downloads as EXE files
+$mattermostURL = 'https://releases.mattermost.com/desktop/5.2.2/mattermost-desktop-setup-5.2.2-win.exe?src=dl'
+$notepadURL = 'https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.5.1/npp.8.5.1.Installer.x64.exe'
+$wiresharkURL = 'https://2.na.dl.wireshark.org/win64/Wireshark-win64-4.0.4.exe'
+$vscodeURL = 'https://code.visualstudio.com/sha/download?build=stable&os=win32-x64'
+$gitbashURL = 'https://github.com/git-for-windows/git/releases/download/v2.40.0.windows.1/Git-2.40.0-64-bit.exe'
+$dockerURL = 'https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe'
+$7ZipURL = 'https://7-zip.org/a/7z2201-x64.exe'
+$etl2pcapURL = 'https://github.com/microsoft/etl2pcapng/releases/download/v1.10.0/etl2pcapng.exe'
+$python3URL = 'https://www.python.org/ftp/python/3.10.10/python-3.10.10-amd64.exe'
+$zoomURL = 'https://zoom.us/client/5.14.0.13888/ZoomInstallerFull.exe?archType=x64'
+
+#downloads as MSI files
+$awscliURL = 'https://awscli.amazonaws.com/AWSCLIV2.msi'
+$awsvpnURL = 'https://d20adtppz83p9s.cloudfront.net/WPF/latest/AWS_VPN_Client.msi'
+$mremotengURL = 'https://github.com/mRemoteNG/mRemoteNG/releases/download/v1.76.20/mRemoteNG-Installer-1.76.20.24615.msi'
+$puttyURL = 'https://the.earth.li/~sgtatham/putty/latest/w64/putty-64bit-0.78-installer.msi'
+
+#downloads as zip file
+$terraformURL = 'https://releases.hashicorp.com/terraform/1.4.2/terraform_1.4.2_windows_386.zip'
+
+
+#Description to user of what will be installed
+$menu = {
+Write-Output "`n`nThis script installs the below list of software on Windows machines.
+Begin by entering a 1 or 2 to choose an install type`n
+1.  MatterMost
+2.  Notepad++
+3.  Wireshark
+4.  VS Code
+5.  Git Bash
+6.  Docker
+7.  7Zip
+8.  etl2pcapng
+9.  Python3
+10. AWS CLI
+11. AWS VPN
+12. mRemoteNG
+13. Putty
+14. Terraform
+15. Zoom`n
+99. Print Menu`n"
+}
+&$menu
+#Function to validate user input
+$installAll = {
+  $userIn = Read-Host -Prompt "Install type [1,2]"
+  if($userIn -eq 1){
+    return 1
+  } 
+  elseif ($userIn -eq 2){
+   return 2
+  }
+  else {
+   Write-Host "Input must be a '1' or '2'"
+   &$installAll
+  }
+}
+#Print menu options and call user function to validate user input
+Write-Host "1. Install all DevOps applications`n2. Install individual program from above list`n"
+$a = &$installAll
+
+#Prompt for user profile name
+$winProfile = Read-Host -Prompt "Enter Windows Domain Username"
+
+#Set Default download path
+$downloadPath = "C:\Users\" + $winProfile + "\Downloads"
+
+Write-Host "The default download path is: $($downloadPath)`n`n1. Specify New Download Path`n2. Keep default download path"
+
+#Function to set new download path
+$defaultYN = {
+  $userIn = Read-Host -Prompt "[1/2]"
+  if($userIn -eq 1){
+    return 1 
+  } 
+  elseif ($userIn -eq 2){
+   return 2
+  }
+  else {
+   Write-Host "Input must be a '1' or '2'"
+   &$defaultYN
+  }
+}
+$b = &$defaultYN
+
+if($b -eq 1){
+   $downloadPath = Read-Host -Prompt "New Path"
+}
+if($b -eq 2){
+  Write-Host "Keeping Default Path`n"
+}
+
+# EXE Installer Functions
+
+# Install Mattermost Chat Client
+$mattermost = {
+
+Invoke-WebRequest $mattermostURL -OutFile "$($downloadPath)\mattermost.exe"
+$mattermostPath = "$($downloadPath)\mattermost.exe"
+Start-Process $mattermostPath -ArgumentList "/S /v/qn" -Wait
+}
+$notepad = {
+
+Invoke-WebRequest $notepadURL -OutFile "$($downloadPath)\notepad.exe"
+$notepadPath = "$($downloadPath)\notepad.exe"
+Start-Process $notepadPath -ArgumentList "/S /v/qn" -Wait
+}
+$wireshark = {
+
+Invoke-WebRequest $wiresharkURL -OutFile "$($downloadPath)\wireshark.exe"
+$wiresharkPath = "$($downloadPath)\wireshark.exe"
+Start-Process $wiresharkPath -ArgumentList "/S /v/qn" -Wait
+}
+$vscode = {
+Invoke-WebRequest $vscodeURL -OutFile "$($downloadPath)\vscode.exe"
+$vscodePath = "$($downloadPath)\vscode.exe"
+Start-Process $vscodePath -ArgumentList "/verysilent /tasks=addcontextmenufiles,addcontextmenufolders,addtopath" -Wait
+
+}
+$gitbash = {
+
+Invoke-WebRequest $gitbashURL -OutFile "$($downloadPath)\gitbash.exe"
+$gitbashPath = "$($downloadPath)\gitbash.exe"
+Start-Process $gitbashPath -ArgumentList "/verysilent /S /v/qn" -Wait
+}
+$docker = {
+
+Invoke-WebRequest $dockerURL -OutFile "$($downloadPath)\docker.exe"
+$dockerPath = "$($downloadPath)\docker.exe";
+Start-Process $dockerPath -ArgumentList "install --quiet" -Wait
+}
+$7Zip = {
+
+Invoke-WebRequest $7ZipURL -OutFile "$($downloadPath)\7Zip.exe"
+$7ZipPath = "$($downloadPath)\7Zip.exe"
+Start-Process $7ZipPath -ArgumentList "/verysilent /allusers /S /v/qn" -Wait
+}
+$etl2pcap = {
+Invoke-WebRequest $etl2pcapURL -OutFile "$($downloadPath)\etl2pcapng.exe"
+
+}
+$python3 = {
+
+Invoke-WebRequest $python3URL -OutFile "$($downloadPath)\python3.exe"
+$python3Path = "$($downloadPath)\python3.exe"
+Start-Process $python3Path -ArgumentList "/S /v/qn" -Wait
+}
+$zoom = {
+
+Invoke-WebRequest $zoomURL -OutFile "$($downloadPath)\zoom.exe"
+$zoomPath = "$($downloadPath)\zoom.exe"
+Start-Process $zoomPath -ArgumentList "/S /v/qn" -Wait
+}
+
+# MSI Installer functions
+
+$awscli = {
+
+Invoke-WebRequest $awscliURL -OutFile "$($downloadPath)\awscli.msi"
+Start-Process awscli.msi -ArgumentList "/quiet /passive" -Wait
+}
+$awsvpn = {
+
+Invoke-WebRequest $awsvpnURL -OutFile "$($downloadPath)\awsvpn.msi"
+Start-Process awsvpn.msi -ArgumentList "/quiet /passive" -Wait
+}
+$mremoteNG = {
+
+Invoke-WebRequest $mremotengURL -OutFile "$($downloadPath)\mremoteng.msi"
+Start-Process mremoteng.msi -ArgumentList "/quiet /passive" -Wait
+}
+$putty = {
+
+Invoke-WebRequest $puttyURL -OutFile "$($downloadPath)\putty.msi"
+Start-Process putty.msi -ArgumentList "/quiet /passive" -Wait
+}
+
+# Zip File Install Functions
+
+$terraform = {
+
+Invoke-WebRequest $terraformURL -OutFile "$($downloadPath)\terraform.zip"
+$terraformZIP = "$($downloadPath)\terraform.zip"
+$terraformPath = "$($downloadPath)\terraform"
+Expand-Archive -Path "$($terraformZIP)" -DestinationPath "$($downloadPath)\terraform" -Force
+Start-Process "$($terraformPath)\terraform.exe" -ArgumentList "/S /v/qn" -Wait
+
+}
+
+$defaultNum = {
+  $userIn = Read-Host -Prompt "Select program from list to install"
+   switch($userIn){
+   1 {return 1}
+   2 {return 2}
+   3 {return 3}
+   4 {return 4}
+   5 {return 5}
+   6 {return 6}
+   7 {return 7}
+   8 {return 8}
+   9 {return 9}
+   10 {return 10}
+   11 {return 11}
+   12 {return 12}
+   13 {return 13}
+   14 {return 14}
+   15 {return 15}
+   99 {return 99}
+   default {&$defaultNum}
+
+}
+  
+  if($userIn -eq 1){
+    return 1 
+  } 
+  elseif ($userIn -eq 2){
+   return 2
+  }
+  else {
+   Write-Host "Input must be a '1' or '2'"
+   &$defaultYN
+  }
+}
+
+# Install Applications
+$install = {
+if($a -eq 1){
+  Write-Output "Installing all Applications"
+  Set-Location $downloadPath
+  Write-Output "[1/15] Installing Mattermost...."
+  &$mattermost
+
+  Write-Output "[2/15] Installing Notepad++...."
+  &$notepad
+
+  Write-Output "[3/15] Installing Wireshark...."
+  &$wireshark
+
+  Write-Output "[4/15] Installing VS Code...."
+  &$vscode
+
+  Write-Output "[5/15] Installing Git Bash...."
+  &$gitbash
+
+  Write-Output "[6/15] Installing Docker Desktop...."
+  &$docker
+
+  Write-Output "[7/15] Installing 7Zip...."
+  &$7Zip
+
+  Write-Output "[8/15] Installing etl2pcapng...."
+  &$etl2pcap
+
+  Write-Output "[9/15] Installing Python3...."
+  &$python3
+
+  Write-Output "[10/15] Installing AWS CLI...."
+  &$awscli
+  
+  Write-Output "[11/15] Installing AWS VPN...."
+  &$awsvpn
+
+  Write-Output "[12/15] Installing mRemoteNG...."
+  &$mremoteNG
+  
+  Write-Output "[13/15] Installing Putty...."
+  &$putty
+
+  Write-Output "[14/15] Installing Terraform...."
+  &$terraform
+
+  Write-Output "[15/15] Installing Zoom...."
+
+  #rm -fo "$($downloadPath)\wireshark.exe"
+
+
+  #clean up downloads?
+  # option to move etl2pcapng
+}
+if($a -eq 2){
+ Write-Output "Install Individually`n"
+ 
+ $userIn = &$defaultNum
+ switch($userIn){
+   1 {  Write-Output "Installing Mattermost...."
+        &$mattermost
+    }
+   2 {  Write-Output "Installing Notepad++...."
+        &$notepad
+     }
+   3 {  Write-Output "Installing Wireshark...."
+        &$wireshark
+     }
+   4 {  Write-Output "Installing VS Code...."
+        &$vscode
+     }
+   5 {  Write-Output "Installing Git Bash...."
+        &$gitbash
+     }
+   6 {  Write-Output "Installing Docker Desktop...."
+        &$docker
+      }
+   7 {  Write-Output "Installing 7Zip...."
+        &$7Zip}
+   8 {  Write-Output "Installing etl2pcapng...."
+        &$etl2pcap}
+   9 {  Write-Output "Installing Python3...."
+        &$python3}
+   10 {  Write-Output "Installing AWS CLI...."
+         &$awscli}
+   11 {  Write-Output "Installing AWS VPN...."
+         &$awsvpn}
+   12 {  Write-Output "Installing mRemoteNG...."
+         &$mremoteNG}
+   13 {  Write-Output "Installing Putty...."
+         &$putty}
+   14 {  Write-Output "Installing Terraform...."
+         &$terraform}
+   15 {  Write-Output "Installing Zoom...."
+         &$zoom}
+   99 {&$menu; &$install}
+}
+}
+}
+&$install
+Write-Output "`nSetup Complete"
