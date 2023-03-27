@@ -3,7 +3,8 @@
 # URLs last updated 3/26/2023
 #
 # Script to auto-install commonly used desktop applcations for devops team members
-
+# Requires enabling scripts on windows machine
+# Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope LocalMachine
 # Download Links - Links should be updated regularly
 
 #downloads as EXE files
